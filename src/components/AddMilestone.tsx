@@ -95,9 +95,9 @@ const AddMilestone: React.FC<AddMilestoneProps> = ({ onAdd, onClose }) => {
               }
             >
               <option value="milestone">🌟 Milestone</option>
-              <option value="first">🎉 First Time</option>
+              <option value="first">✨ First Time</option>
               <option value="growth">📏 Growth</option>
-              <option value="fun">😊 Fun Moment</option>
+              <option value="fun">🎉 Fun Moment</option>
             </select>
           </div>
 

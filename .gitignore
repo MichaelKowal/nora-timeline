@@ -27,3 +27,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+create-public-timeline.sql

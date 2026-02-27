@@ -10,7 +10,6 @@ interface AdminLoginProps {
 const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onClose }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,21 +20,10 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onClose }) => {
 
     try {
       let result;
-
-      if (isSignUp) {
-        result = await authService.signUp(email, password);
-        if (result.user && !result.error) {
-          setError("Check your email for the confirmation link!");
-          setIsSignUp(false);
-          setEmail("");
-          setPassword("");
-        }
-      } else {
-        result = await authService.signIn(email, password);
-        if (result.user && !result.error) {
+      result = await authService.signIn(email, password);
+      if (result.user && !result.error) {
           onLogin(result.user.id);
           onClose();
-        }
       }
 
       if (result.error) {
@@ -58,7 +46,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onClose }) => {
     <div className="admin-login-overlay" onClick={handleOverlayClick}>
       <div className="admin-login-content">
         <div className="admin-login-header">
-          <h2>{isSignUp ? "Create Account" : "Admin Login"}</h2>
+          <h2>Admin Login</h2>
           <button className="admin-close-button" onClick={onClose}>
             ×
           </button>
@@ -112,28 +100,10 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onClose }) => {
               className="admin-login-button"
               disabled={loading}
             >
-              {loading ? "..." : isSignUp ? "Sign Up" : "Login"}
+              {loading ? "..." : "Login"}
             </button>
           </div>
         </form>
-
-        <div className="admin-info">
-          <button
-            type="button"
-            className="admin-toggle-mode"
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError("");
-              setEmail("");
-              setPassword("");
-            }}
-            disabled={loading}
-          >
-            {isSignUp
-              ? "Already have an account? Login"
-              : "Need an account? Sign up"}
-          </button>
-        </div>
       </div>
     </div>
   );

@@ -20,15 +20,17 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize authentication and load data
+  // Initialize authentication and load shared timeline data
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Check if user is already authenticated
+        // Load shared timeline for everyone (no authentication required to view)
+        await loadTimelineData();
+
+        // Check if user is already authenticated (for admin features)
         const currentUser = await authService.getCurrentUser();
         if (currentUser) {
           setUser({ id: currentUser.id });
-          await loadTimelineData(currentUser.id);
         }
       } catch (err) {
         console.error("Error initializing app:", err);
@@ -40,31 +42,25 @@ function App() {
 
     initializeApp();
 
-    // Listen for auth state changes
+    // Listen for auth state changes (for admin login/logout)
     const {
       data: { subscription },
     } = authService.onAuthStateChange(async (supabaseUser) => {
       if (supabaseUser) {
         setUser({ id: supabaseUser.id });
-        await loadTimelineData(supabaseUser.id);
       } else {
         setUser(null);
-        setTimelineData({
-          babyName: "Nora",
-          birthDate: "2024-01-01",
-          items: [],
-        });
       }
     });
 
     return () => subscription?.unsubscribe();
   }, []);
 
-  // Load timeline data from Supabase
-  const loadTimelineData = async (userId: string) => {
+  // Load shared timeline data (public for everyone)
+  const loadTimelineData = async () => {
     try {
       setError(null);
-      const data = await timelineService.getTimeline(userId);
+      const data = await timelineService.getTimeline();
       if (data) {
         setTimelineData(data);
       } else {
@@ -74,7 +70,7 @@ function App() {
           birthDate: "2024-01-01",
           items: [],
         };
-        await timelineService.saveTimeline(userId, initialTimeline);
+        await timelineService.saveTimeline(initialTimeline);
         setTimelineData(initialTimeline);
       }
     } catch (err) {
@@ -83,12 +79,12 @@ function App() {
     }
   };
 
-  // Save timeline changes to Supabase
+  // Save timeline changes to Supabase (admin only)
   const saveTimelineChanges = async (newTimelineData: TimelineData) => {
     if (!user) return;
 
     try {
-      await timelineService.saveTimeline(user.id, newTimelineData);
+      await timelineService.saveTimeline(newTimelineData);
     } catch (err) {
       console.error("Error saving timeline:", err);
       setError("Failed to save timeline changes");
@@ -96,11 +92,11 @@ function App() {
   };
 
   const addMilestone = async (newItem: Omit<TimelineItem, "id">) => {
-    if (!user) return;
+    if (!user) return; // Admin only
 
     try {
       setError(null);
-      const milestone = await timelineService.addMilestone(user.id, newItem);
+      const milestone = await timelineService.addMilestone(newItem);
 
       setTimelineData((prev) => ({
         ...prev,
@@ -113,7 +109,7 @@ function App() {
   };
 
   const deleteMilestone = async (id: string) => {
-    if (!user) return;
+    if (!user) return; // Admin only
 
     if (window.confirm("Are you sure you want to delete this milestone?")) {
       try {
@@ -132,7 +128,7 @@ function App() {
   };
 
   const updateBabyName = async (newName: string) => {
-    if (!user) return;
+    if (!user) return; // Admin only
 
     const newTimelineData = {
       ...timelineData,
@@ -159,11 +155,7 @@ function App() {
   };
 
   const handleAddMilestoneClick = () => {
-    if (user) {
-      setShowAddModal(true);
-    } else {
-      setShowAdminLogin(true);
-    }
+    setShowAddModal(true);
   };
 
   // Show loading spinner during initialization
@@ -191,40 +183,34 @@ function App() {
 
       <header className="app-header">
         <div className="header-content">
-          <input
-            type="text"
-            value={timelineData.babyName}
-            onChange={(e) => updateBabyName(e.target.value)}
-            className="baby-name-input"
-            placeholder="Baby's name"
-            disabled={!user}
-            title={!user ? "Login required to edit name" : ""}
-          />
+          <div
+            className="baby-name-title"
+          >{timelineData.babyName}</div>
 
           <div className="header-actions">
-            <button
-              onClick={handleAddMilestoneClick}
-              className="add-milestone-btn"
-              title={
-                !user ? "Login required to add milestones" : "Add new milestone"
-              }
-            >
-              + Add Milestone
-            </button>
+            {user && (
+              <button
+                onClick={handleAddMilestoneClick}
+                className="add-milestone-btn"
+                title="Add new milestone"
+              >
+                + Add Milestone
+              </button>
+            )}
 
             {user ? (
               <button
                 onClick={handleAdminLogout}
                 className="admin-btn admin-logout"
               >
-                🔓 Logout
+                🔓 Admin Logout
               </button>
             ) : (
               <button
                 onClick={() => setShowAdminLogin(true)}
                 className="admin-btn admin-login"
               >
-                🔒 Login
+                🔒 Admin Login
               </button>
             )}
           </div>

@@ -86,7 +86,7 @@
   gap: 1rem;
 }
 
-.baby-name-input {
+.baby-name-title {
   background: transparent;
   border: none;
   font-size: 1.8rem;
@@ -100,16 +100,6 @@
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-}
-
-.baby-name-input:focus {
-  outline: none;
-  border-bottom-color: #a8edea;
-}
-
-.baby-name-input::placeholder {
-  color: #888;
-  -webkit-text-fill-color: #888;
 }
 
 .add-milestone-btn {

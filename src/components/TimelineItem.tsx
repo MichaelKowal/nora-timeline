@@ -19,11 +19,7 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
 }) => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    return date.toISOString().split("T")[0];
   };
 
   const getCategoryIcon = (category?: TimelineItemType["category"]) => {
@@ -31,11 +27,11 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
       case "milestone":
         return "🌟";
       case "first":
-        return "🎉";
+        return "✨";
       case "growth":
         return "📏";
       case "fun":
-        return "😊";
+        return "🎉";
       default:
         return "💖";
     }

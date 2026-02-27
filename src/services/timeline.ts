@@ -2,22 +2,30 @@ import { supabase } from "../lib/supabase";
 import type { TimelineItem, TimelineData } from "../types/Timeline";
 
 export class TimelineService {
-  // Get timeline data for a user
-  async getTimeline(userId: string): Promise<TimelineData | null> {
+  // Fixed ID for the shared public timeline
+  private readonly PUBLIC_TIMELINE_ID = 'public-timeline';
+
+  // Get the shared public timeline data
+  async getTimeline(): Promise<TimelineData | null> {
     try {
-      // Get timeline info
+      // Get timeline info - use a fixed ID for the public timeline
       const { data: timeline, error: timelineError } = await supabase
         .from("timelines")
         .select("*")
-        .eq("user_id", userId)
+        .eq("id", this.PUBLIC_TIMELINE_ID)
         .single();
 
       if (timelineError || !timeline) {
-        console.error("Timeline not found:", timelineError);
-        return null;
+        // If no public timeline exists, return a default one
+        console.log("No public timeline found, returning default");
+        return {
+          babyName: "Nora",
+          birthDate: "2024-01-01",
+          items: [],
+        };
       }
 
-      // Get milestones for this timeline
+      // Get milestones for the public timeline
       const { data: milestones, error: milestonesError } = await supabase
         .from("milestones")
         .select("*")
@@ -52,24 +60,22 @@ export class TimelineService {
     }
   }
 
-  // Create or update timeline
-  async saveTimeline(
-    userId: string,
-    timelineData: TimelineData,
-  ): Promise<void> {
+  // Create or update the shared public timeline
+  async saveTimeline(timelineData: TimelineData): Promise<void> {
     try {
-      // Upsert timeline
+      // Upsert the public timeline
       const { error: timelineError } = await supabase
         .from("timelines")
         .upsert(
           {
-            user_id: userId,
+            id: this.PUBLIC_TIMELINE_ID,
+            user_id: null, // No specific user for shared timeline
             baby_name: timelineData.babyName,
             birth_date: timelineData.birthDate,
             updated_at: new Date().toISOString(),
           },
           {
-            onConflict: "user_id",
+            onConflict: "id",
           },
         )
         .select()
@@ -79,35 +85,24 @@ export class TimelineService {
         throw new Error(`Timeline save error: ${timelineError.message}`);
       }
 
-      console.log("Timeline saved successfully");
+      console.log("Public timeline saved successfully");
     } catch (error) {
       console.error("Error saving timeline:", error);
       throw error;
     }
   }
 
-  // Add a new milestone
-  async addMilestone(
-    userId: string,
-    milestone: Omit<TimelineItem, "id">,
-  ): Promise<TimelineItem> {
+  // Add a new milestone to the shared public timeline
+  async addMilestone(milestone: Omit<TimelineItem, "id">): Promise<TimelineItem> {
     try {
-      // First get the timeline ID
-      const { data: timeline, error: timelineError } = await supabase
-        .from("timelines")
-        .select("id")
-        .eq("user_id", userId)
-        .single();
+      // Ensure public timeline exists first
+      await this.ensurePublicTimelineExists();
 
-      if (timelineError || !timeline) {
-        throw new Error("Timeline not found");
-      }
-
-      // Insert the milestone
+      // Insert the milestone to the public timeline
       const { data, error } = await supabase
         .from("milestones")
         .insert({
-          timeline_id: timeline.id,
+          timeline_id: this.PUBLIC_TIMELINE_ID,
           title: milestone.title,
           description: milestone.description,
           milestone_date: milestone.date,
@@ -132,6 +127,31 @@ export class TimelineService {
     } catch (error) {
       console.error("Error in addMilestone:", error);
       throw error;
+    }
+  }
+
+  // Helper method to ensure public timeline exists
+  private async ensurePublicTimelineExists(): Promise<void> {
+    try {
+      const { data: existingTimeline } = await supabase
+        .from("timelines")
+        .select("id")
+        .eq("id", this.PUBLIC_TIMELINE_ID)
+        .single();
+
+      if (!existingTimeline) {
+        // Create the public timeline if it doesn't exist
+        await supabase
+          .from("timelines")
+          .insert({
+            id: this.PUBLIC_TIMELINE_ID,
+            user_id: null,
+            baby_name: "Nora",
+            birth_date: "2024-01-01",
+          });
+      }
+    } catch (error) {
+      console.log("Public timeline creation handled");
     }
   }
 
