@@ -79,18 +79,6 @@ function App() {
     }
   };
 
-  // Save timeline changes to Supabase (admin only)
-  const saveTimelineChanges = async (newTimelineData: TimelineData) => {
-    if (!user) return;
-
-    try {
-      await timelineService.saveTimeline(newTimelineData);
-    } catch (err) {
-      console.error("Error saving timeline:", err);
-      setError("Failed to save timeline changes");
-    }
-  };
-
   const addMilestone = async (newItem: Omit<TimelineItem, "id">) => {
     if (!user) return; // Admin only
 
@@ -125,18 +113,6 @@ function App() {
         setError("Failed to delete milestone");
       }
     }
-  };
-
-  const updateBabyName = async (newName: string) => {
-    if (!user) return; // Admin only
-
-    const newTimelineData = {
-      ...timelineData,
-      babyName: newName,
-    };
-
-    setTimelineData(newTimelineData);
-    await saveTimelineChanges(newTimelineData);
   };
 
   const handleAdminLogin = (userId: string) => {
@@ -183,9 +159,7 @@ function App() {
 
       <header className="app-header">
         <div className="header-content">
-          <div
-            className="baby-name-title"
-          >{timelineData.babyName}</div>
+          <div className="baby-name-title">{timelineData.babyName}</div>
 
           <div className="header-actions">
             {user && (
