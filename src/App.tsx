@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import Timeline from "./components/Timeline";
 import AddMilestone from "./components/AddMilestone";
 import AdminLogin from "./components/AdminLogin";
+import PasswordScreen from "./components/PasswordScreen";
 import { authService } from "./services/auth";
 import { timelineService } from "./services/timeline";
 import type { TimelineItem, TimelineData } from "./types/Timeline";
 import "./App.css";
 
 function App() {
+  const [isPasswordAuthenticated, setIsPasswordAuthenticated] = useState(false);
   const [timelineData, setTimelineData] = useState<TimelineData>({
     babyName: "Nora",
     birthDate: "2024-01-01",
@@ -130,9 +132,18 @@ function App() {
     }
   };
 
+  const handlePasswordAuthenticated = () => {
+    setIsPasswordAuthenticated(true);
+  };
+
   const handleAddMilestoneClick = () => {
     setShowAddModal(true);
   };
+
+  // Show password screen if not authenticated
+  if (!isPasswordAuthenticated) {
+    return <PasswordScreen onAuthenticated={handlePasswordAuthenticated} />;
+  }
 
   // Show loading spinner during initialization
   if (loading) {
